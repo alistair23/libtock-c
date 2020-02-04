@@ -37,7 +37,6 @@ ELF2TAB_EXISTS := $(shell $(SHELL) -c "command -v $(ELF2TAB)")
 ifndef ELF2TAB_EXISTS
   $(shell cargo install elf2tab)
 endif
-ELF2TAB_ARGS += -n $(PACKAGE_NAME)
 ELF2TAB_ARGS += --stack $(STACK_SIZE) --app-heap $(APP_HEAP_SIZE) --kernel-heap $(KERNEL_HEAP_SIZE)
 
 # Flags for building app Assembly, C, C++ files
