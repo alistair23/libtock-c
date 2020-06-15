@@ -203,7 +203,7 @@ void WsfSetOsSpecificEvent(void)
           //
           if ( xResult != pdFAIL )
           {
-              portYIELD();
+              // portYIELD();
           }
       }
 

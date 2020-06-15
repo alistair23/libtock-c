@@ -168,13 +168,6 @@ void uECC_set_rng_ll(uECC_RNG_Function rng_function) {
     g_rng_function = rng_function;
 }
 
-#ifdef __GNUC__ /* Only support GCC inline asm for now */
-    #if (uECC_ASM && (uECC_PLATFORM == uECC_arm || uECC_PLATFORM == uECC_arm_thumb || \
-                      uECC_PLATFORM == uECC_arm_thumb2))
-        #include "asm_arm.inc"
-    #endif
-#endif
-
 #if !defined(asm_clear) || !asm_clear
 static void vli_clear(uECC_word_t *vli) {
     wordcount_t i;

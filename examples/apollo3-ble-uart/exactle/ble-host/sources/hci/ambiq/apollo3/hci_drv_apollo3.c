@@ -69,7 +69,7 @@
 // Use the interrupt-driven HCI driver?
 //
 //*****************************************************************************
-#define USE_NONBLOCKING_HCI             0
+#define USE_NONBLOCKING_HCI             1
 #define SKIP_FALLING_EDGES              0
 
 //*****************************************************************************
@@ -236,17 +236,11 @@ void hciDrvReadCallback(uint8_t *pui8Data, uint32_t ui32Length, void *pvContext)
 // Debug section.
 //
 //*****************************************************************************
-#if 0
 #define CRITICAL_PRINT(...)                                                   \
     do                                                                        \
     {                                                                         \
-        AM_CRITICAL_BEGIN;                                                    \
-        am_util_debug_printf(__VA_ARGS__);                                    \
-        AM_CRITICAL_END;                                                      \
+        printf(__VA_ARGS__);                                    \
     } while (0)
-#else
-#define CRITICAL_PRINT(...)
-#endif
 
 #define ENABLE_IRQ_PIN 0
 
@@ -509,7 +503,7 @@ HciDrvRadioBoot(bool bColdBoot)
     CRITICAL_PRINT("INTEN:  %d\n", BLEIF->INTEN_b.BLECSSTAT);
     CRITICAL_PRINT("INTENREG:  %d\n", BLEIF->INTEN);
 
-    NVIC_EnableIRQ(BLE_IRQn);
+    // NVIC_EnableIRQ(BLE_IRQn);
 
     //
     // Initialize a queue to help us keep track of HCI write buffers.
@@ -534,7 +528,7 @@ HciDrvRadioShutdown(void)
 {
     BLE_HEARTBEAT_STOP();
 
-    NVIC_DisableIRQ(BLE_IRQn);
+    // NVIC_DisableIRQ(BLE_IRQn);
 
     ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
 
@@ -802,6 +796,9 @@ HciDrvIntService(void)
     am_hal_gpio_state_write(11, AM_HAL_GPIO_OUTPUT_CLEAR);
 #endif
 
+    am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_CMDCMP |
+                                AM_HAL_BLE_INT_DCMP |
+                                AM_HAL_BLE_INT_BLECIRQ));
 }
 
 #if USE_NONBLOCKING_HCI
