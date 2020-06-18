@@ -142,7 +142,7 @@ int main (void) {
 
   //
   // Configure the peripheral's advertised name: (tag_main.c)
-  set_adv_name("TockOS BLE");
+  // set_adv_name("TockOS BLE");
 
   //
   // Boot the radio.

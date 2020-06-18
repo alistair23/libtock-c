@@ -400,8 +400,11 @@ void WsfTimerUpdateTicks(void)
     //
     if ( xNextExpiration )
     {
-        configASSERT(pdPASS == xTimerChangePeriod( xWsfTimer,
-                pdMS_TO_TICKS(xNextExpiration*CLK_TICKS_PER_WSF_TICKS), 100)) ;
+      printf("xNextExpiration start\n");
+      printf("pdPASS: %d; %ld\n", pdPASS, xTimerChangePeriod( xWsfTimer, pdMS_TO_TICKS(xNextExpiration*CLK_TICKS_PER_WSF_TICKS), 100));
+        pdPASS == xTimerChangePeriod( xWsfTimer,
+                pdMS_TO_TICKS(xNextExpiration*CLK_TICKS_PER_WSF_TICKS), 100) ;
+        printf("xNextExpiration done\n");
     }
 }
 

@@ -69,7 +69,7 @@
 // Use the interrupt-driven HCI driver?
 //
 //*****************************************************************************
-#define USE_NONBLOCKING_HCI             1
+#define USE_NONBLOCKING_HCI             0
 #define SKIP_FALLING_EDGES              0
 
 //*****************************************************************************
@@ -575,6 +575,17 @@ update_wake(void)
 }
 #endif
 
+void
+am_ble_isr(void)
+{
+    CRITICAL_PRINT("am_ble_isr\n");
+    HciDrvIntService();
+
+    // Signal radio task to run
+
+    WsfTaskSetReady(0, 0);
+}
+
 //*****************************************************************************
 //
 // Function used by the BLE stack to send HCI messages to the BLE controller.
@@ -606,6 +617,8 @@ hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
         ERROR_RETURN(HCI_DRV_TX_PACKET_TOO_LARGE, len);
     }
 
+    subscribe(0x30000, 0, am_ble_isr, NULL);
+
     //
     // Get a pointer to the next item in the queue.
     //
@@ -620,10 +633,13 @@ hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
 
     *pui8Wptr++ = type;
 
+    CRITICAL_PRINT("About to write: (%d)", len);
     for (uint32_t i = 0; i < len; i++)
     {
+        CRITICAL_PRINT("0x%x", pData[i]);
         pui8Wptr[i] = pData[i];
     }
+    CRITICAL_PRINT("\n");;
 
     //
     // Advance the queue.
@@ -714,8 +730,10 @@ HciDrvIntService(void)
     //
     // Read and clear the interrupt status.
     //
-    uint32_t ui32Status = am_hal_ble_int_status(BLE, true);
+    uint32_t ui32Status = am_hal_ble_int_status(BLE, false);
     am_hal_ble_int_clear(BLE, ui32Status);
+
+    CRITICAL_PRINT("HciDrvIntService\n");
 
 #if USE_NONBLOCKING_HCI
     //
@@ -795,6 +813,8 @@ HciDrvIntService(void)
 #if AM_DEBUG_BLE_TIMING
     am_hal_gpio_state_write(11, AM_HAL_GPIO_OUTPUT_CLEAR);
 #endif
+
+    CRITICAL_PRINT("Enable IRQ\n");
 
     am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_CMDCMP |
                                 AM_HAL_BLE_INT_DCMP |

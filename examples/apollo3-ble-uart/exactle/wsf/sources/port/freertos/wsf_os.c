@@ -343,7 +343,7 @@ void WsfOsInit(void)
   {
     xRadioTaskEventObject = xEventGroupCreate();
 
-    WSF_ASSERT(xRadioTaskEventObject != NULL);
+    // WSF_ASSERT(xRadioTaskEventObject != NULL);
   }
 }
 
@@ -420,7 +420,7 @@ void wsfOsDispatcher(void)
       }
     }
   }
-  xEventGroupWaitBits(xRadioTaskEventObject, 1, pdTRUE,
-                      pdFALSE, portMAX_DELAY);
+  // xEventGroupWaitBits(xRadioTaskEventObject, 1, pdTRUE,
+                      // pdFALSE, portMAX_DELAY);
 }
 
