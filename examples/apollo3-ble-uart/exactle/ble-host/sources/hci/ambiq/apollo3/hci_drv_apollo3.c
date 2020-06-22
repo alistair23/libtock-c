@@ -382,7 +382,7 @@ HciDrvRadioBoot(bool bColdBoot)
     while (ui32Status != AM_HAL_STATUS_SUCCESS)
     {
         ERROR_CHECK_VOID(am_hal_ble_initialize(0, &BLE));
-        ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_ACTIVE));
+        // ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_ACTIVE));
 
         am_hal_ble_config_t sBleConfig =
         {
@@ -412,7 +412,7 @@ HciDrvRadioBoot(bool bColdBoot)
             .bUseDefaultPatches = true,
         };
 
-        ERROR_CHECK_VOID(am_hal_ble_config(BLE, &sBleConfig));
+        // ERROR_CHECK_VOID(am_hal_ble_config(BLE, &sBleConfig));
         //
         // Delay 1s for 32768Hz clock stability. This isn't required unless this is
         // our first run immediately after a power-up.
@@ -442,8 +442,8 @@ HciDrvRadioBoot(bool bColdBoot)
             // If the radio is running, but the clock looks bad, we can try to
             // restart.
             //
-            ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
-            ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
+            // ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
+            // ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
 
             //
             // We won't restart forever. After we hit the maximum number of
@@ -460,8 +460,8 @@ HciDrvRadioBoot(bool bColdBoot)
         }
         else
         {
-            ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
-            ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
+            // ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
+            // ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
             //
             // If the radio failed for some reason other than 32K Clock
             // instability, we should just report the failure and return.
@@ -474,47 +474,47 @@ HciDrvRadioBoot(bool bColdBoot)
     //
     // Set the BLE TX Output power to 0dBm.
     //
-    am_hal_ble_tx_power_set(BLE, 0x8);
+    // am_hal_ble_tx_power_set(BLE, 0x8);
 
     //
     // Enable interrupts for the BLE module.
     //
-#if USE_NONBLOCKING_HCI
-    am_hal_ble_int_clear(BLE, (AM_HAL_BLE_INT_CMDCMP |
-                               AM_HAL_BLE_INT_DCMP |
-                               AM_HAL_BLE_INT_BLECIRQ |
-                               AM_HAL_BLE_INT_BLECSSTAT));
+// #if USE_NONBLOCKING_HCI
+//     am_hal_ble_int_clear(BLE, (AM_HAL_BLE_INT_CMDCMP |
+//                                AM_HAL_BLE_INT_DCMP |
+//                                AM_HAL_BLE_INT_BLECIRQ |
+//                                AM_HAL_BLE_INT_BLECSSTAT));
 
-    am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_CMDCMP |
-                                AM_HAL_BLE_INT_DCMP |
-                                AM_HAL_BLE_INT_BLECIRQ |
-                                AM_HAL_BLE_INT_BLECSSTAT));
+//     am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_CMDCMP |
+//                                 AM_HAL_BLE_INT_DCMP |
+//                                 AM_HAL_BLE_INT_BLECIRQ |
+//                                 AM_HAL_BLE_INT_BLECSSTAT));
 
-#if SKIP_FALLING_EDGES
-#else
-    if (APOLLO3_GE_B0)
-    {
-        am_hal_ble_int_clear(BLE, (AM_HAL_BLE_INT_BLECIRQN |
-                                   AM_HAL_BLE_INT_BLECSSTATN));
+// #if SKIP_FALLING_EDGES
+// #else
+//     if (APOLLO3_GE_B0)
+//     {
+//         am_hal_ble_int_clear(BLE, (AM_HAL_BLE_INT_BLECIRQN |
+//                                    AM_HAL_BLE_INT_BLECSSTATN));
 
-        am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_BLECIRQN |
-                                    AM_HAL_BLE_INT_BLECSSTATN));
-    }
-#endif
+//         am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_BLECIRQN |
+//                                     AM_HAL_BLE_INT_BLECSSTATN));
+//     }
+// #endif
 
-#else
+// #else
 
-    am_hal_ble_int_clear(BLE, (AM_HAL_BLE_INT_CMDCMP |
-                               AM_HAL_BLE_INT_DCMP |
-                               AM_HAL_BLE_INT_BLECIRQ));
+//     am_hal_ble_int_clear(BLE, (AM_HAL_BLE_INT_CMDCMP |
+//                                AM_HAL_BLE_INT_DCMP |
+//                                AM_HAL_BLE_INT_BLECIRQ));
 
-    am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_CMDCMP |
-                                AM_HAL_BLE_INT_DCMP |
-                                AM_HAL_BLE_INT_BLECIRQ));
-#endif
+//     am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_CMDCMP |
+//                                 AM_HAL_BLE_INT_DCMP |
+//                                 AM_HAL_BLE_INT_BLECIRQ));
+// #endif
 
-    CRITICAL_PRINT("INTEN:  %d\n", BLEIF->INTEN_b.BLECSSTAT);
-    CRITICAL_PRINT("INTENREG:  %d\n", BLEIF->INTEN);
+//     CRITICAL_PRINT("INTEN:  %d\n", BLEIF->INTEN_b.BLECSSTAT);
+//     CRITICAL_PRINT("INTENREG:  %d\n", BLEIF->INTEN);
 
     // NVIC_EnableIRQ(BLE_IRQn);
 
