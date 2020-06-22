@@ -295,6 +295,17 @@ error_check(uint32_t ui32Status)
 
 #define BLE_IRQ_CHECK()             (BLEIF->BSTATUS_b.BLEIRQ)
 
+void
+am_ble_isr(void)
+{
+    CRITICAL_PRINT("am_ble_isr\n");
+    HciDrvIntService();
+
+    // Signal radio task to run
+
+    WsfTaskSetReady(0, 0);
+}
+
 // Ellisys HCI SPI tapping support
 
 // #define ELLISYS_HCI_LOG_SUPPORT 1
@@ -308,6 +319,8 @@ void
 HciDrvRadioBoot(bool bColdBoot)
 {
     uint32_t ui32NumXtalRetries = 0;
+
+    subscribe(0x30003, 0, am_ble_isr, NULL);
 
 
     g_ui32NumBytes     = 0;
@@ -575,17 +588,6 @@ update_wake(void)
 }
 #endif
 
-void
-am_ble_isr(void)
-{
-    CRITICAL_PRINT("am_ble_isr\n");
-    HciDrvIntService();
-
-    // Signal radio task to run
-
-    WsfTaskSetReady(0, 0);
-}
-
 //*****************************************************************************
 //
 // Function used by the BLE stack to send HCI messages to the BLE controller.
@@ -617,7 +619,7 @@ hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
         ERROR_RETURN(HCI_DRV_TX_PACKET_TOO_LARGE, len);
     }
 
-    subscribe(0x30000, 0, am_ble_isr, NULL);
+    // subscribe(0x30003, 0, am_ble_isr, NULL);
 
     //
     // Get a pointer to the next item in the queue.

@@ -62,7 +62,7 @@ scheduler_timer_init(void)
 {
   static bool resume = 0;
   static tock_timer_t timer;
-  printf("Setting Timer in app\n");
+  // printf("Setting Timer in app\n");
   timer_every(100, timer_cb, &resume, &timer);
 
 }
@@ -151,9 +151,9 @@ int main (void) {
 
   printf("Radio booted\n");
 
-  for (int i = 0; i < 1000000; i++) {
-    asm("nop");
-  }
+  // for (int i = 0; i < 1000000; i++) {
+    // asm("nop");
+  // }
 
   //
   // Initialize the main ExactLE stack.
