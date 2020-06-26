@@ -74,6 +74,6 @@ void   HciVsA3_CarrierWaveMode(uint8_t txchannel);
 //*****************************************************************************
 extern void HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg);
 extern void HciDrvHandlerInit(wsfHandlerId_t handlerId);
-extern void HciDrvIntService(void);
+extern void HciDrvIntService(int interrupt_status);
 
 #endif // HCI_DRV_APOLLO3_H

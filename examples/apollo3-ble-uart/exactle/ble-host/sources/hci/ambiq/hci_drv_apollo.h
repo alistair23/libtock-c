@@ -56,7 +56,7 @@ extern void HciDrvRadioBoot(uint32_t ui32UartModule);
 extern void HciDrvRadioShutdown(void);
 extern void HciDrvUartISR(uint32_t ui32Status);
 extern bool_t HciDataReadyISR(void);
-extern void HciDrvIntService(void);
+extern void HciDrvIntService(int interrupt_status);
 extern void HciDrvGPIOService(void);
 extern void HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg);
 extern void HciDrvErrorHandlerSet(hci_drv_error_handler_t pfnErrorHandler);

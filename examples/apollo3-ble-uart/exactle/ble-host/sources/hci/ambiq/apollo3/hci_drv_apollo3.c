@@ -295,11 +295,13 @@ error_check(uint32_t ui32Status)
 
 #define BLE_IRQ_CHECK()             (BLEIF->BSTATUS_b.BLEIRQ)
 
-void
-am_ble_isr(void)
+static void am_ble_isr (int interrupt_status,
+                      __attribute__ ((unused)) int arg1,
+                      __attribute__ ((unused)) int arg2,
+                      __attribute__ ((unused)) void* userdata)
 {
     CRITICAL_PRINT("am_ble_isr\n");
-    HciDrvIntService();
+    HciDrvIntService(interrupt_status);
 
     // Signal radio task to run
 
@@ -723,7 +725,7 @@ HciDrvHandlerInit(wsfHandlerId_t handlerId)
 //
 //*****************************************************************************
 void
-HciDrvIntService(void)
+HciDrvIntService(int interrupt_status)
 {
 #if AM_DEBUG_BLE_TIMING
     am_hal_gpio_state_write(11, AM_HAL_GPIO_OUTPUT_SET);
@@ -732,8 +734,8 @@ HciDrvIntService(void)
     //
     // Read and clear the interrupt status.
     //
-    uint32_t ui32Status = am_hal_ble_int_status(BLE, false);
-    am_hal_ble_int_clear(BLE, ui32Status);
+    // uint32_t ui32Status = am_hal_ble_int_status(BLE, false);
+    // am_hal_ble_int_clear(BLE, ui32Status);
 
     CRITICAL_PRINT("HciDrvIntService\n");
 
@@ -816,11 +818,11 @@ HciDrvIntService(void)
     am_hal_gpio_state_write(11, AM_HAL_GPIO_OUTPUT_CLEAR);
 #endif
 
-    CRITICAL_PRINT("Enable IRQ\n");
+    // CRITICAL_PRINT("Enable IRQ\n");
 
-    am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_CMDCMP |
-                                AM_HAL_BLE_INT_DCMP |
-                                AM_HAL_BLE_INT_BLECIRQ));
+    // am_hal_ble_int_enable(BLE, (AM_HAL_BLE_INT_CMDCMP |
+    //                             AM_HAL_BLE_INT_DCMP |
+    //                             AM_HAL_BLE_INT_BLECIRQ));
 }
 
 #if USE_NONBLOCKING_HCI
