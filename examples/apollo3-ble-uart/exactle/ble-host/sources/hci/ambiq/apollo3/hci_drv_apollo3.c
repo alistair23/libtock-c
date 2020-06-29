@@ -308,6 +308,44 @@ static void am_ble_isr (int interrupt_status,
     WsfTaskSetReady(0, 0);
 }
 
+static void am_read_complete (int numBytes,
+                      __attribute__ ((unused)) int arg1,
+                      __attribute__ ((unused)) int arg2,
+                      __attribute__ ((unused)) void* userdata)
+{
+    g_ui32NumBytes = numBytes;
+    CRITICAL_PRINT("am_read_callback: 0x%x; %d\n", g_ui32NumBytes, g_consumed_bytes);
+    //
+    // Check to see if we read any bytes over the HCI interface that we haven't
+    // already sent to the BLE stack.
+    //
+    if (g_ui32NumBytes > g_consumed_bytes)
+    {
+        //
+        // If we have any bytes saved, we should send them to the BLE stack
+        // now.
+        //
+        g_consumed_bytes += hciTrSerialRxIncoming(g_pui8ReadBuffer + g_consumed_bytes,
+                                                  g_ui32NumBytes - g_consumed_bytes);
+
+        CRITICAL_PRINT("  g_consumed_bytes: %d\n", g_consumed_bytes);
+
+        //
+        // If the stack doesn't accept all of the bytes we had,
+        //
+        if (g_consumed_bytes != g_ui32NumBytes)
+        {
+            WsfSetEvent(g_HciDrvHandleID, BLE_TRANSFER_NEEDED_EVENT);
+            return;
+        }
+        else
+        {
+            g_ui32NumBytes   = 0;
+            g_consumed_bytes = 0;
+        }
+    }
+}
+
 // Ellisys HCI SPI tapping support
 
 // #define ELLISYS_HCI_LOG_SUPPORT 1
