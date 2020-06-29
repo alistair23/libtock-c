@@ -1256,49 +1256,17 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
                                                                 psWriteBuffer->ui32Length);
 
                 //
-                // If we managed to actually send a packet, we can go ahead and
-                // advance the queue.
+                // Restart the heartbeat timer.
                 //
-                if (ui32ErrorStatus == AM_HAL_STATUS_SUCCESS)
-                {
-                    //
-                    // Restart the heartbeat timer.
-                    //
-                    BLE_HEARTBEAT_RESTART();
+                BLE_HEARTBEAT_RESTART();
 
-                    am_hal_queue_item_get(&g_sWriteQueue, 0, 1);
+                am_hal_queue_item_get(&g_sWriteQueue, 0, 1);
 
-                    ui32TxRetries = 0;
-                    // Resetting the cumulative count
-                    ui32NumHciTransactions = 0;
-                }
-                else
-                {
-                    //
-                    // If we fail too many times in a row, we should throw an
-                    // error to avoid a lock-up.
-                    //
-                    ui32TxRetries++;
-
-                    if (ui32TxRetries > HCI_DRV_MAX_TX_RETRIES)
-                    {
-                        // we need to come back again later.
-                        WsfSetEvent(g_HciDrvHandleID, BLE_TRANSFER_NEEDED_EVENT);
-                        break;
-                    }
-                }
-
+                // Resetting the cumulative count
+                ui32NumHciTransactions = 0;
             }
         }
     }
-
-    if (ui32NumHciTransactions == HCI_DRV_MAX_HCI_TRANSACTIONS)
-    {
-        CRITICAL_PRINT("ERROR: Maximum number of successive HCI transactions exceeded.\n");
-        ERROR_RECOVER(HCI_DRV_TOO_MANY_PACKETS);
-    }
-
-    am_hal_debug_gpio_clear(BLE_DEBUG_TRACE_01);
 }
 #endif
 
