@@ -1136,6 +1136,10 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
         //
         // Figure out what kind of transfer the BLE core will accept.
         //
+        // int can_read = 0;
+        // allow(0x30003, 0, (void*)&can_read, 1);
+        // command(0x30003, 0, 0, 0);
+        // if ( can_read )
         if ( BLE_IRQ_CHECK() )
         {
             uint32_t ui32OldInterruptsSeen = g_ui32InterruptsSeen;
@@ -1144,23 +1148,15 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
 
             BLE_HEARTBEAT_RESTART();
 
-            //
-            // Is the BLE core asking for a read? If so, do that now.
-            //
+            // subscribe(0x30003, 1, am_read_complete, NULL);
+            // allow(0x30003, 0, (void*)g_pui32ReadBuffer, HCI_DRV_MAX_RX_PACKET);
+            // command(0x30003, 1, 0, 0);
             g_ui32NumBytes = 0;
             ui32ErrorStatus = am_hal_ble_blocking_hci_read(BLE, (uint32_t*)g_pui32ReadBuffer, &g_ui32NumBytes);
 
-            if (g_ui32NumBytes > HCI_DRV_MAX_RX_PACKET)
+
+            if ( true )
             {
-                CRITICAL_PRINT("ERROR: Trying to receive an HCI packet larger than the hci driver buffer size (needs %d bytes of space).",
-                               g_ui32NumBytes);
-
-                ERROR_CHECK_VOID(HCI_DRV_RX_PACKET_TOO_LARGE);
-            }
-
-            if ( ui32ErrorStatus == AM_HAL_STATUS_SUCCESS)
-            {
-
                 //
                 // If the read succeeded, we need to wait for the IRQ signal to
                 // go back down. If we don't we might inadvertently try to read
@@ -1250,10 +1246,12 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
                 am_hal_debug_gpio_set(BLE_DEBUG_TRACE_07);
                 hci_drv_write_t *psWriteBuffer = am_hal_queue_peek(&g_sWriteQueue);
 
-                ui32ErrorStatus = am_hal_ble_blocking_hci_write(BLE,
-                                                                AM_HAL_BLE_RAW,
-                                                                psWriteBuffer->pui32Data,
-                                                                psWriteBuffer->ui32Length);
+                allow(0x30003, 1, (void*)psWriteBuffer->pui32Data, psWriteBuffer->ui32Length);
+                command(0x30003, 2, 0, 0);
+                // ui32ErrorStatus = am_hal_ble_blocking_hci_write(BLE,
+                                                                // AM_HAL_BLE_RAW,
+                                                                // psWriteBuffer->pui32Data,
+                                                                // psWriteBuffer->ui32Length);
 
                 //
                 // Restart the heartbeat timer.
