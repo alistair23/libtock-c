@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "ros.h"
 #include "tock.h"
 
 typedef struct {
@@ -99,6 +100,24 @@ int tock_allow_ro_return_to_returncode(allow_ro_return_t allow_return) {
 void yield_for(bool *cond) {
   while (!*cond) {
     yield();
+  }
+}
+
+int quick_yield(void* base) {
+  if (task_cur != task_last) {
+    tock_task_t task = task_queue[task_cur];
+    task_cur = (task_cur + 1) % TASK_QUEUE_SIZE;
+    task.cb(task.arg0, task.arg1, task.arg2, task.ud);
+    return 1;
+  } else {
+    uint32_t tasks = ros_get_pending_tasks(base);
+
+    if (tasks > 0) {
+      // Waiting tasks, call yield
+      yield();
+    }
+
+    return tasks;
   }
 }
 
