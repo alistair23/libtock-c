@@ -243,7 +243,6 @@ void hciDrvReadCallback(uint8_t *pui8Data, uint32_t ui32Length, void *pvContext)
 #define CRITICAL_PRINT(...)                                                   \
     do                                                                        \
     {                                                                         \
-        printf(__VA_ARGS__);                                    \
     } while (0)
 
 #define ENABLE_IRQ_PIN 0
@@ -337,7 +336,7 @@ HciDrvRadioBoot(bool bColdBoot)
     while (ui32Status != AM_HAL_STATUS_SUCCESS)
     {
         ERROR_CHECK_VOID(am_hal_ble_initialize(0, &BLE));
-        ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_ACTIVE));
+        // ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_ACTIVE));
 
         am_hal_ble_config_t sBleConfig =
         {
@@ -402,7 +401,7 @@ HciDrvRadioBoot(bool bColdBoot)
             // If the radio is running, but the clock looks bad, we can try to
             // restart.
             //
-            ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
+            // ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
             ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
 
             //
@@ -874,6 +873,8 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
     uint32_t ui32NumHciTransactions = 0;
     uint32_t read_hci_packet_count = 0;
 
+    CRITICAL_PRINT("HciDrvHandler\n");
+
     //
     // If this handler was called in response to a heartbeat event, then it's
     // time to run a benign HCI command. Normally, the BLE controller should
@@ -999,6 +1000,8 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
     uint32_t ui32NumHciTransactions = 0;
     uint32_t read_hci_packet_count = 0;
 
+    CRITICAL_PRINT("HciDrvHandler 2\n");
+
     //
     // If this handler was called in response to a heartbeat event, then it's
     // time to run a benign HCI command. Normally, the BLE controller should
@@ -1009,10 +1012,15 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
     //
     if (pMsg->event == BLE_HEARTBEAT_EVENT)
     {
+        CRITICAL_PRINT("HciDrvHandler 2.1\n");
         HciReadLocalVerInfoCmd();
+        CRITICAL_PRINT("HciDrvHandler 2.2\n");
         BLE_HEARTBEAT_START();
+        CRITICAL_PRINT("HciDrvHandler 2.3\n");
         return;
     }
+
+    CRITICAL_PRINT("HciDrvHandler 3\n");
 
     //
     // Check to see if we read any bytes over the HCI interface that we haven't
@@ -1041,6 +1049,8 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
             g_consumed_bytes = 0;
         }
     }
+
+    CRITICAL_PRINT("HciDrvHandler 4\n");
 
     am_hal_debug_gpio_set(BLE_DEBUG_TRACE_01);
 
@@ -1208,6 +1218,8 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
             }
         }
     }
+
+    CRITICAL_PRINT("HciDrvHandler 5\n");
 
     if (ui32NumHciTransactions == HCI_DRV_MAX_HCI_TRANSACTIONS)
     {

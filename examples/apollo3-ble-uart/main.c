@@ -57,10 +57,9 @@ static void timer_cb(__attribute__ ((unused)) uint32_t now,
 void
 scheduler_timer_init(void)
 {
-  static bool resume = 0;
   static libtock_alarm_repeating_t timer;
   // printf("Setting Timer in app\n");
-  libtock_alarm_repeating_every(10, timer_cb, &resume, &timer);
+  libtock_alarm_repeating_every(10, timer_cb, NULL, &timer);
 
 }
 
@@ -84,7 +83,6 @@ void exactle_stack_init(void){
     //
     // Set up timers for the WSF scheduler.
     //
-    scheduler_timer_init();
     WsfOsInit();
     WsfTimerInit();
 
@@ -208,6 +206,8 @@ int main (void) {
   TagStart();
 
   printf("Finished Setup\n");
+
+  scheduler_timer_init();
 
   yield();
 

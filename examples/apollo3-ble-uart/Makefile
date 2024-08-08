@@ -254,8 +254,8 @@ C_SRCS += app_terminal.c
 C_SRCS += am_hal_ble.c
 C_SRCS += am_hal_ble_patch.c
 C_SRCS += am_hal_ble_patch_b0.c
-C_SRCS += am_hal_interrupt.c
-C_SRCS += am_hal_pwrctrl.c
+# C_SRCS += am_hal_interrupt.c
+# C_SRCS += am_hal_pwrctrl.c
 C_SRCS += am_hal_queue.c
 
 # Include userland master makefile. Contains rules and flags for actually
