@@ -63,6 +63,21 @@ scheduler_timer_init(void)
 
 }
 
+uint32_t am_util_stdio_printf(const char *format, ...) {
+// This will print a lot of debug information
+#ifdef DEBUG
+    int result;
+    va_list args;
+
+    va_start(args, format);
+    printf(format, args);
+    printf("\r\n");
+    va_end(args);
+#endif
+
+    return 0;
+}
+
 // Delays for a desired amount of loops.
 // This re-implemented the HAL delay without
 // calling into the ROM
