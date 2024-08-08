@@ -83,6 +83,7 @@ void exactle_stack_init(void){
     //
     // Set up timers for the WSF scheduler.
     //
+    scheduler_timer_init();
     WsfOsInit();
     WsfTimerInit();
 
@@ -207,9 +208,7 @@ int main (void) {
 
   printf("Finished Setup\n");
 
-  scheduler_timer_init();
-
-  yield();
+  // yield();
 
   while (1)
     {
