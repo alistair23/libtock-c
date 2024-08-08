@@ -243,6 +243,7 @@ void hciDrvReadCallback(uint8_t *pui8Data, uint32_t ui32Length, void *pvContext)
 #define CRITICAL_PRINT(...)                                                   \
     do                                                                        \
     {                                                                         \
+        printf(__VA_ARGS__);                                    \
     } while (0)
 
 #define ENABLE_IRQ_PIN 0

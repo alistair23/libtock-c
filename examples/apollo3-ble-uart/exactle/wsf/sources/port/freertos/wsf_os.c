@@ -24,6 +24,7 @@
 #include <intrinsics.h>
 #endif
 #include <string.h>
+#include <stdio.h>
 #include "wsf_types.h"
 #include "wsf_os.h"
 #include "wsf_assert.h"
@@ -146,14 +147,21 @@ void WsfSetOsSpecificEvent(void)
 
       BaseType_t xHigherPriorityTaskWoken, xResult;
 
-      xResult = xEventGroupSetBits(xRadioTaskEventObject, 1);
+      //
+      // Send an event to the main radio task
+      //
+      xHigherPriorityTaskWoken = pdFALSE;
+
+      xResult = xEventGroupSetBitsFromISR(xRadioTaskEventObject, 1,
+                                          &xHigherPriorityTaskWoken);
+
       //
       // If the radio task is higher priority than the context we're currently
       // running from, we should yield now and run the radio task.
       //
       if ( xResult != pdFAIL )
       {
-          // portYIELD();
+          portYIELD();
           // yield();
       }
   }    
@@ -371,5 +379,6 @@ void wsfOsDispatcher(void)
   }
   xEventGroupWaitBits(xRadioTaskEventObject, 1, pdTRUE,
                       pdFALSE, portMAX_DELAY);
+  yield();
 }
 

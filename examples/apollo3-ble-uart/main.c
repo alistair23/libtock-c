@@ -59,7 +59,7 @@ scheduler_timer_init(void)
 {
   static libtock_alarm_repeating_t timer;
   // printf("Setting Timer in app\n");
-  libtock_alarm_repeating_every(10, timer_cb, NULL, &timer);
+  libtock_alarm_repeating_every(100, timer_cb, NULL, &timer);
 
 }
 
