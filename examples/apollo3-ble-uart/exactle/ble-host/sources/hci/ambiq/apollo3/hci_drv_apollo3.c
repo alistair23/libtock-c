@@ -60,6 +60,7 @@
 #include "dm_api.h"
 
 #include "am_mcu_apollo.h"
+#include "am_hal_gpio.h"
 #include "am_util.h"
 #include "hci_drv_apollo3.h"
 
@@ -311,9 +312,6 @@ static void am_ble_isr (int interrupt_status,
     WsfTaskSetReady(0, 0);
 }
 
-// Ellisys HCI SPI tapping support
-
-// #define ELLISYS_HCI_LOG_SUPPORT 1
 
 //*****************************************************************************
 //
@@ -329,17 +327,6 @@ HciDrvRadioBoot(bool bColdBoot)
 
     g_ui32NumBytes     = 0;
     g_consumed_bytes   = 0;
-#if !defined(AM_DEBUG_BLE_TIMING) && defined(ELLISYS_HCI_LOG_SUPPORT)
-    am_hal_gpio_pincfg_t pincfg = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    pincfg.uFuncSel = 6;
-    am_hal_gpio_pinconfig(30, pincfg);
-    am_hal_gpio_pinconfig(31, pincfg);
-    am_hal_gpio_pinconfig(32, pincfg);
-    pincfg.uFuncSel = 4;
-    am_hal_gpio_pinconfig(33, pincfg);
-    pincfg.uFuncSel = 7;
-    am_hal_gpio_pinconfig(35, pincfg);
-#endif
 
     CRITICAL_PRINT("Configure and enable the BLE interface\n");
 

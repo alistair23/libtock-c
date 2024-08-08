@@ -60,19 +60,20 @@ scheduler_timer_init(void)
   static bool resume = 0;
   static libtock_alarm_repeating_t timer;
   // printf("Setting Timer in app\n");
-  libtock_alarm_repeating_every(100, timer_cb, &resume, &timer);
+  libtock_alarm_repeating_every(10, timer_cb, &resume, &timer);
 
 }
 
-void am_util_delay_us(uint32_t ui32MicroSeconds)
+// Delays for a desired amount of loops.
+// This re-implemented the HAL delay without
+// calling into the ROM
+// We can't use `libtocksync_alarm_delay_ms()` as the syscall
+// overhead is too large.
+void am_hal_flash_delay(uint32_t ui32Iterations)
 {
-  libtocksync_alarm_delay_ms( ui32MicroSeconds / 1000 );
-}
-
-void
-am_util_delay_ms(uint32_t ui32MilliSeconds)
-{
-  libtocksync_alarm_delay_ms( ui32MilliSeconds );
+    for (int i = 0; i < ui32Iterations; i++) {
+        asm("nop");
+    }
 }
 
 void exactle_stack_init(void){
@@ -177,7 +178,7 @@ int main (void) {
   // Configure the peripheral's advertised name: (tag_main.c)
   // set_adv_name("TockOS BLE");
 
-  command(0x10001, 2, 0x5000C000, 0x410);
+  command(0x10001, 2, 0x50000000, 0x80000);
 
   //
   // Boot the radio.

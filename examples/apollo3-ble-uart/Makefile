@@ -225,6 +225,7 @@ C_SRCS += hci_vs.c
 C_SRCS += hci_vs_ae.c
 
 C_SRCS += am_util_ble.c
+C_SRCS += am_util_delay.c
 C_SRCS += am_util_stdio.c
 
 C_SRCS += event_groups.c
@@ -254,6 +255,7 @@ C_SRCS += am_hal_ble.c
 C_SRCS += am_hal_ble_patch.c
 C_SRCS += am_hal_ble_patch_b0.c
 C_SRCS += am_hal_interrupt.c
+C_SRCS += am_hal_pwrctrl.c
 C_SRCS += am_hal_queue.c
 
 # Include userland master makefile. Contains rules and flags for actually
