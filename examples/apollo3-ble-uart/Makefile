@@ -25,6 +25,7 @@ CPPFLAGS+= -DWSF_TRACE_ENABLED
 CPPFLAGS+= -DHCI_TRACE_ENABLED
 CPPFLAGS+= -Dgcc
 CPPFLAGS+= -DNOFPU
+CPPFLAGS+= -DuECC_ASM=0
 
 CPPFLAGS += -Iexactle/wsf/include
 CPPFLAGS += -Iexactle/wsf/sources/
@@ -48,7 +49,7 @@ CPPFLAGS += -Iexactle/ble-profiles/sources/profiles/gap
 CPPFLAGS += -Iexactle/ble-profiles/sources/profiles/fmpl
 CPPFLAGS += -Iexactle/ble-profiles/sources/profiles/include/
 CPPFLAGS += -Iexactle/ble-profiles/sources/apps/
-CPPFLAGS += -Iuecc
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK/third_party/uecc
 
 CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//mcu/apollo3/
 CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//utils/
@@ -85,7 +86,6 @@ VPATH+=:exactle/ble-host/sources/stack/cfg
 VPATH+=:exactle/ble-host/sources/hci/ambiq
 VPATH+=:exactle/ble-profiles/sources/apps/hidapp
 VPATH+=:exactle/ble-host/sources/stack/l2c
-VPATH+=:uecc
 
 VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//utils/
 VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//devices
@@ -95,6 +95,7 @@ VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//third_p
 VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//third_party/FreeRTOSv10.1.1/Source/portable/GCC/ARM_CM3/
 VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//third_party/FreeRTOSv10.1.1/Source/portable/MemMang/
 VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//boards_sfe/common/examples/ble_freertos_tag/src/
+VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK/third_party/uecc/
 
 C_SRCS += l2c_coc.c
 C_SRCS += l2c_main.c
