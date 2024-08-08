@@ -3,6 +3,8 @@
 # Specify this directory relative to the current application.
 TOCK_USERLAND_BASE_DIR = ../..
 
+TOCK_TARGETS := cortex-m3 cortex-m4 cortex-m7
+
 # Which files to compile.
 C_SRCS := $(wildcard *.c)
 
@@ -13,7 +15,7 @@ C_SRCS := $(wildcard *.c)
 
 CPPFLAGS+=  -DPART_$(PART)
 CPPFLAGS+= -DAM_FREERTOS
-CPPFLAGS+= -DAM_CUSTOM_BDADDR
+# CPPFLAGS+= -DAM_CUSTOM_BDADDR
 CPPFLAGS+= -DAM_PACKAGE_BGA
 CPPFLAGS+= -DWSF_TRACE_ENABLED
 CPPFLAGS+= -DAM_DEBUG_PRINTF
@@ -48,17 +50,17 @@ CPPFLAGS += -Iexactle/ble-profiles/sources/profiles/include/
 CPPFLAGS += -Iexactle/ble-profiles/sources/apps/
 CPPFLAGS += -Iuecc
 
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/mcu/apollo3/
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/utils/
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/mcu/apollo3/hal/
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/CMSIS/AmbiqMicro/Include/
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/CMSIS/ARM/Include/
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/boards_sfe/common/examples/ble_freertos_tag/src
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/boards_sfe/redboard_artemis_nano/bsp/
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/devices
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//mcu/apollo3/
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//utils/
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//mcu/apollo3/hal/
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//CMSIS/AmbiqMicro/Include/
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//CMSIS/ARM/Include/
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//boards_sfe/common/examples/ble_freertos_tag/src
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//boards_sfe/redboard_artemis_nano/bsp/
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//devices
 
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/third_party/FreeRTOSv10.1.1/Source/include
-CPPFLAGS += -I/scratch/alistair/software/mbed/AmbiqSuiteSDK/third_party/FreeRTOSv10.1.1/Source/portable/GCC/ARM_CM4F/
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//third_party/FreeRTOSv10.1.1/Source/include
+CPPFLAGS += -I/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//third_party/FreeRTOSv10.1.1/Source/portable/GCC/ARM_CM3/
 
 VPATH+= exactle/wsf/sources/port/freertos
 VPATH+=:exactle/ble-profiles/sources/profiles/hid
@@ -85,14 +87,14 @@ VPATH+=:exactle/ble-profiles/sources/apps/hidapp
 VPATH+=:exactle/ble-host/sources/stack/l2c
 VPATH+=:uecc
 
-VPATH+=:/scratch/alistair/software/mbed/AmbiqSuiteSDK/utils/
-VPATH+=:/scratch/alistair/software/mbed/AmbiqSuiteSDK/devices
-VPATH+=:/scratch/alistair/software/mbed/AmbiqSuiteSDK/mcu/apollo3/hal/
+VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//utils/
+VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//devices
+VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//mcu/apollo3/hal/
 VPATH+=:exactle/wsf/sources/port/freertos/
-VPATH+=:/scratch/alistair/software/mbed/AmbiqSuiteSDK/third_party/FreeRTOSv10.1.1/Source/
-VPATH+=:/scratch/alistair/software/mbed/AmbiqSuiteSDK/third_party/FreeRTOSv10.1.1/Source/portable/GCC/ARM_CM4F/
-VPATH+=:/scratch/alistair/software/mbed/AmbiqSuiteSDK/third_party/FreeRTOSv10.1.1/Source/portable/MemMang/
-VPATH+=:/scratch/alistair/software/mbed/AmbiqSuiteSDK/boards_sfe/common/examples/ble_freertos_tag/src/
+VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//third_party/FreeRTOSv10.1.1/Source/
+VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//third_party/FreeRTOSv10.1.1/Source/portable/GCC/ARM_CM3/
+VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//third_party/FreeRTOSv10.1.1/Source/portable/MemMang/
+VPATH+=:/scratch/alistair/software/tier3/Cerebus-FreeRTOS/AmbiqSuiteSDK//boards_sfe/common/examples/ble_freertos_tag/src/
 
 C_SRCS += l2c_coc.c
 C_SRCS += l2c_main.c
@@ -223,9 +225,6 @@ C_SRCS += hci_vs.c
 C_SRCS += hci_vs_ae.c
 
 C_SRCS += am_util_ble.c
-C_SRCS += am_util_debug.c
-C_SRCS += am_util_delay.c
-C_SRCS += am_util_id.c
 C_SRCS += am_util_stdio.c
 
 C_SRCS += event_groups.c
@@ -254,16 +253,7 @@ C_SRCS += app_terminal.c
 C_SRCS += am_hal_ble.c
 C_SRCS += am_hal_ble_patch.c
 C_SRCS += am_hal_ble_patch_b0.c
-C_SRCS += am_hal_cachectrl.c
-C_SRCS += am_hal_clkgen.c
-C_SRCS += am_hal_cmdq.c
-C_SRCS += am_hal_ctimer.c
-C_SRCS += am_hal_debug.c
-C_SRCS += am_hal_flash.c
-C_SRCS += am_hal_global.c
 C_SRCS += am_hal_interrupt.c
-C_SRCS += am_hal_mcuctrl.c
-C_SRCS += am_hal_pwrctrl.c
 C_SRCS += am_hal_queue.c
 
 # Include userland master makefile. Contains rules and flags for actually

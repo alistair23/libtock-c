@@ -4,8 +4,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <console.h>
-#include <tock.h>
+#include <libtock/interface/console.h>
+#include <libtock/services/alarm.h>
+#include "libtock-sync/services/alarm.h"
+#include <libtock/tock.h>
 
 #include "wsf_types.h"
 #include "wsf_trace.h"
@@ -25,15 +27,12 @@
 #include "hci_drv_apollo.h"
 #include "hci_drv_apollo3.h"
 
-#include "am_mcu_apollo.h"
 #include "am_util.h"
 
 #include "tag_api.h"
 #include "app_ui.h"
 
 #include "wsf_msg.h"
-
-#include <timer.h>
 
 #define WSF_BUF_POOLS               4
 
@@ -49,11 +48,9 @@ static wsfBufPoolDesc_t g_psPoolDescriptors[WSF_BUF_POOLS] =
     { 280,  8 }
 };
 
-static void timer_cb (__attribute__ ((unused)) int arg0,
-                      __attribute__ ((unused)) int arg1,
-                      __attribute__ ((unused)) int arg2,
-                      __attribute__ ((unused)) void* userdata) {
-  printf("Timer Fired in app\n");
+static void timer_cb(__attribute__ ((unused)) uint32_t now,
+                     __attribute__ ((unused)) uint32_t scheduled,
+                     __attribute__ ((unused)) void*    opaque) {
   WsfTaskSetReady(0, WSF_TIMER_EVENT);
 }
 
@@ -61,14 +58,27 @@ void
 scheduler_timer_init(void)
 {
   static bool resume = 0;
-  static tock_timer_t timer;
+  static libtock_alarm_repeating_t timer;
   // printf("Setting Timer in app\n");
-  timer_every(100, timer_cb, &resume, &timer);
+  libtock_alarm_repeating_every(100, timer_cb, &resume, &timer);
 
+}
+
+void am_util_delay_us(uint32_t ui32MicroSeconds)
+{
+  libtocksync_alarm_delay_ms( ui32MicroSeconds / 1000 );
+}
+
+void
+am_util_delay_ms(uint32_t ui32MilliSeconds)
+{
+  libtocksync_alarm_delay_ms( ui32MilliSeconds );
 }
 
 void exactle_stack_init(void){
     wsfHandlerId_t handlerId;
+
+    printf("Set up timers for the WSF scheduler.\n");
 
     //
     // Set up timers for the WSF scheduler.
@@ -77,10 +87,14 @@ void exactle_stack_init(void){
     WsfOsInit();
     WsfTimerInit();
 
+    printf("Initialize a buffer pool for WSF dynamic memory needs.\n");
+
     //
     // Initialize a buffer pool for WSF dynamic memory needs.
     //
     WsfBufInit(sizeof(g_pui32BufMem), (uint8_t*)g_pui32BufMem, WSF_BUF_POOLS, g_psPoolDescriptors);
+
+    printf("Initialize security.\n");
 
     //
     // Initialize security.
@@ -90,11 +104,15 @@ void exactle_stack_init(void){
     SecCmacInit();
     SecEccInit();
 
+    printf("Set up callback functions for the various layers of the ExactLE stack.\n");
+
     //
     // Set up callback functions for the various layers of the ExactLE stack.
     //
     handlerId = WsfOsSetNextHandler(HciHandler);
     HciHandlerInit(handlerId);
+
+    printf("DmHandler\n");
 
     handlerId = WsfOsSetNextHandler(DmHandler);
     DmDevVsInit(0);
@@ -106,10 +124,17 @@ void exactle_stack_init(void){
     DmPrivInit();
     DmHandlerInit(handlerId);
 
+    printf("L2cSlaveHandler\n");
+
     handlerId = WsfOsSetNextHandler(L2cSlaveHandler);
+    printf("L2cSlaveHandlerInit\n");
     L2cSlaveHandlerInit(handlerId);
+    printf("L2cInit\n");
     L2cInit();
+    printf("L2cSlaveInit\n");
     L2cSlaveInit();
+
+    printf("AttHandler\n");
 
     handlerId = WsfOsSetNextHandler(AttHandler);
     AttHandlerInit(handlerId);
@@ -117,17 +142,25 @@ void exactle_stack_init(void){
     AttsIndInit();
     AttcInit();
 
+    printf("SmpHandler\n");
+
     handlerId = WsfOsSetNextHandler(SmpHandler);
     SmpHandlerInit(handlerId);
     SmprInit();
     SmprScInit();
     HciSetMaxRxAclLen(251);
 
+    printf("AppHandler\n");
+
     handlerId = WsfOsSetNextHandler(AppHandler);
     AppHandlerInit(handlerId);
 
+    printf("TagHandler\n");
+
     handlerId = WsfOsSetNextHandler(TagHandler);
     TagHandlerInit(handlerId);
+
+    printf("HciDrvHandler\n");
 
     handlerId = WsfOsSetNextHandler(HciDrvHandler);
     HciDrvHandlerInit(handlerId);
@@ -143,6 +176,8 @@ int main (void) {
   //
   // Configure the peripheral's advertised name: (tag_main.c)
   // set_adv_name("TockOS BLE");
+
+  command(0x10001, 2, 0x5000C000, 0x410);
 
   //
   // Boot the radio.
@@ -164,7 +199,7 @@ int main (void) {
 
   // printf("Setting callback\n");
 
-  // subscribe(0x30000, 0, am_ble_isr, NULL);
+  // subscribe(0x10001, 0, am_ble_isr, NULL);
 
   //
   // Start the "Tag" profile.

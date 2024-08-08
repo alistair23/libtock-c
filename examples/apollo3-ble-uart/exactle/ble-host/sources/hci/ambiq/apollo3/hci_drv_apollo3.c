@@ -46,6 +46,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "wsf_types.h"
 #include "wsf_timer.h"
@@ -63,6 +64,8 @@
 #include "hci_drv_apollo3.h"
 
 #include <string.h>
+
+#include <libtock/tock.h>
 
 //*****************************************************************************
 //
@@ -295,10 +298,12 @@ error_check(uint32_t ui32Status)
 
 #define BLE_IRQ_CHECK()             (BLEIF->BSTATUS_b.BLEIRQ)
 
-void
-am_ble_isr(void)
+static void am_ble_isr (int interrupt_status,
+                      __attribute__ ((unused)) int arg1,
+                      __attribute__ ((unused)) int arg2,
+                      __attribute__ ((unused)) void* userdata)
 {
-    CRITICAL_PRINT("am_ble_isr\n");
+    CRITICAL_PRINT("am_ble_isr: 0x%x\n", interrupt_status);
     HciDrvIntService();
 
     // Signal radio task to run
@@ -320,8 +325,7 @@ HciDrvRadioBoot(bool bColdBoot)
 {
     uint32_t ui32NumXtalRetries = 0;
 
-    subscribe(0x30003, 0, am_ble_isr, NULL);
-
+    subscribe(0x10001, 0, am_ble_isr, NULL);
 
     g_ui32NumBytes     = 0;
     g_consumed_bytes   = 0;
@@ -337,43 +341,7 @@ HciDrvRadioBoot(bool bColdBoot)
     am_hal_gpio_pinconfig(35, pincfg);
 #endif
 
-#ifdef AM_DEBUG_BLE_TIMING
-    //
-    // Enable debug pins.
-    //
-    // 30.6 - SCLK
-    // 31.6 - MISO
-    // 32.6 - MOSI
-    // 33.4 - CSN
-    // 35.7 - SPI_STATUS
-    //
-    am_hal_gpio_pincfg_t pincfg = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    pincfg.uFuncSel = 6;
-    am_hal_gpio_pinconfig(30, pincfg);
-    am_hal_gpio_pinconfig(31, pincfg);
-    am_hal_gpio_pinconfig(32, pincfg);
-    pincfg.uFuncSel = 4;
-    am_hal_gpio_pinconfig(33, pincfg);
-    pincfg.uFuncSel = 7;
-    am_hal_gpio_pinconfig(35, pincfg);
-    pincfg.uFuncSel = 1;
-#if ENABLE_IRQ_PIN
-    am_hal_gpio_pinconfig(41, pincfg);
-    am_hal_debug_gpio_pinconfig(BLE_DEBUG_TRACE_08);
-#endif
-
-    am_hal_gpio_pinconfig(11, g_AM_HAL_GPIO_OUTPUT);
-
-#endif // AM_DEBUG_BLE_TIMING
-
-    //
-    // This pin is also used to generate BLE interrupts in the current
-    // implementation.
-    //
-    // 41.1 - BLE IRQ
-    //
-    //am_hal_gpio_pin_config(41, AM_HAL_GPIO_FUNC(1));
-
+    CRITICAL_PRINT("Configure and enable the BLE interface\n");
 
     //
     // Configure and enable the BLE interface.
@@ -419,18 +387,22 @@ HciDrvRadioBoot(bool bColdBoot)
         //
         if ( bColdBoot )
         {
+            CRITICAL_PRINT("am_util_delay_ms\n");
             am_util_delay_ms(1000);
         }
         //
         // Attempt to boot the radio.
         //
+        CRITICAL_PRINT("am_hal_ble_boot\n");
         ui32Status = am_hal_ble_boot(BLE);
+        CRITICAL_PRINT("am_hal_ble_boot - done\n");
 
         //
         // Check our status.
         //
         if (ui32Status == AM_HAL_STATUS_SUCCESS)
         {
+            CRITICAL_PRINT("good\n");
             //
             // If the radio is running, we can exit this loop.
             //
@@ -438,6 +410,7 @@ HciDrvRadioBoot(bool bColdBoot)
         }
         else if (ui32Status == AM_HAL_BLE_32K_CLOCK_UNSTABLE)
         {
+            CRITICAL_PRINT("unstable\n");
             //
             // If the radio is running, but the clock looks bad, we can try to
             // restart.
@@ -460,7 +433,8 @@ HciDrvRadioBoot(bool bColdBoot)
         }
         else
         {
-            ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
+            CRITICAL_PRINT("bad\n");
+            // ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
             ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
             //
             // If the radio failed for some reason other than 32K Clock
@@ -541,10 +515,6 @@ HciDrvRadioShutdown(void)
 {
     BLE_HEARTBEAT_STOP();
 
-    // NVIC_DisableIRQ(BLE_IRQn);
-
-    ERROR_CHECK_VOID(am_hal_ble_power_control(BLE, AM_HAL_BLE_POWER_OFF));
-
     while ( PWRCTRL->DEVPWREN_b.PWRBLEL );
 
     ERROR_CHECK_VOID(am_hal_ble_deinitialize(BLE));
@@ -619,8 +589,6 @@ hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
         ERROR_RETURN(HCI_DRV_TX_PACKET_TOO_LARGE, len);
     }
 
-    // subscribe(0x30003, 0, am_ble_isr, NULL);
-
     //
     // Get a pointer to the next item in the queue.
     //
@@ -646,6 +614,7 @@ hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
     //
     // Advance the queue.
     //
+    CRITICAL_PRINT("Advance the queue\n");
     am_hal_queue_item_add(&g_sWriteQueue, 0, 1);
 
 #if USE_NONBLOCKING_HCI
@@ -660,6 +629,7 @@ hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
     //
     // Send an event to the BLE transfer handler function.
     //
+    CRITICAL_PRINT("BLE_TRANSFER_NEEDED_EVENT\n");
     WsfSetEvent(g_HciDrvHandleID, BLE_TRANSFER_NEEDED_EVENT);
 #endif
 
