@@ -306,9 +306,13 @@ static void am_ble_isr (int interrupt_status,
     CRITICAL_PRINT("am_ble_isr: 0x%x\n", interrupt_status);
     HciDrvIntService();
 
+    CRITICAL_PRINT("Signal radio task to run\n");
+
     // Signal radio task to run
 
     WsfTaskSetReady(0, 0);
+
+    CRITICAL_PRINT("ISR Done\n");
 }
 
 
@@ -617,6 +621,7 @@ hciDrvWrite(uint8_t type, uint16_t len, uint8_t *pData)
     //
     CRITICAL_PRINT("BLE_TRANSFER_NEEDED_EVENT\n");
     WsfSetEvent(g_HciDrvHandleID, BLE_TRANSFER_NEEDED_EVENT);
+    CRITICAL_PRINT("BLE_TRANSFER_NEEDED_EVENT: Done\n");
 #endif
 
 #ifdef AM_CUSTOM_BDADDR
@@ -1010,7 +1015,7 @@ HciDrvHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
     // alert us to the fact that the BLE core has become unresponsive in
     // general.
     //
-    if (pMsg->event == BLE_HEARTBEAT_EVENT)
+    if (pMsg && pMsg->event == BLE_HEARTBEAT_EVENT)
     {
         CRITICAL_PRINT("HciDrvHandler 2.1\n");
         HciReadLocalVerInfoCmd();
