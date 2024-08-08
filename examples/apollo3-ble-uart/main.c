@@ -83,7 +83,6 @@ void exactle_stack_init(void){
     //
     // Set up timers for the WSF scheduler.
     //
-    scheduler_timer_init();
     WsfOsInit();
     WsfTimerInit();
 
@@ -183,32 +182,22 @@ int main (void) {
   // Boot the radio.
   //
   HciDrvRadioBoot(1);
-
   printf("Radio booted\n");
-
-  // for (int i = 0; i < 1000000; i++) {
-    // asm("nop");
-  // }
 
   //
   // Initialize the main ExactLE stack.
   //
   exactle_stack_init();
+  printf("Stack init complete\n");
 
-  printf("Stack init\n");
-
-  // printf("Setting callback\n");
-
-  // subscribe(0x10001, 0, am_ble_isr, NULL);
+  scheduler_timer_init();
+  printf("Set up timer\n");
 
   //
   // Start the "Tag" profile.
   //
   TagStart();
-
   printf("Finished Setup\n");
-
-  // yield();
 
   while (1)
     {
