@@ -225,7 +225,6 @@ C_SRCS += hci_vs.c
 C_SRCS += hci_vs_ae.c
 
 C_SRCS += am_util_ble.c
-C_SRCS += am_util_delay.c
 C_SRCS += am_util_stdio.c
 
 C_SRCS += event_groups.c

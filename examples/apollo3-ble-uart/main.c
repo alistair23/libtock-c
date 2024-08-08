@@ -75,6 +75,19 @@ void am_hal_flash_delay(uint32_t ui32Iterations)
     }
 }
 
+void am_util_delay_ms(uint32_t ui32MilliSeconds)
+{
+  libtocksync_alarm_delay_ms(ui32MilliSeconds);
+}
+
+void am_util_delay_us(uint32_t ui32MicroSeconds)
+{
+  uint32_t ui32HFRC = 48 * 1000 * 1000;
+  uint32_t ui32Iterations = ui32MicroSeconds * (ui32HFRC / 3000000);
+
+  am_hal_flash_delay(ui32Iterations);
+}
+
 void exactle_stack_init(void){
     wsfHandlerId_t handlerId;
 
