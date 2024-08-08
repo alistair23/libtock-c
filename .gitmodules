@@ -10,3 +10,6 @@
 [submodule "libopenthread/openthread"]
 	path = libopenthread/openthread
 	url = https://github.com/openthread/openthread.git
+[submodule "examples/apollo3-ble-uart/AmbiqSuiteSDK"]
+	path = examples/apollo3-ble-uart/AmbiqSuiteSDK
+	url = https://github.com/alistair23/AmbiqSuiteSDK.git
