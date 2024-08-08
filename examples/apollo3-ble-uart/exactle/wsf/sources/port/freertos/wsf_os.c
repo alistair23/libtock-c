@@ -34,6 +34,8 @@
 #include "wsf_msg.h"
 #include "wsf_cs.h"
 
+#include <libtock/tock.h>
+
 /**************************************************************************************************
   Compile time assert checks
 **************************************************************************************************/
@@ -94,20 +96,6 @@ EventGroupHandle_t xRadioTaskEventObject = NULL;
 /*************************************************************************************************/
 void WsfCsEnter(void)
 {
-  if (csNesting == 0)
-  {
-#ifdef __IAR_SYSTEMS_ICC__
-    __disable_interrupt();
-#endif
-#ifdef __GNUC__
-    __asm volatile ("cpsid i");
-#endif
-#ifdef __CC_ARM
-  __disable_irq();
-#endif
-
-  }
-  csNesting++;
 }
 
 /*************************************************************************************************/
@@ -121,22 +109,6 @@ void WsfCsEnter(void)
 /*************************************************************************************************/
 void WsfCsExit(void)
 {
-  WSF_ASSERT(csNesting != 0);
-
-  csNesting--;
-  if (csNesting == 0)
-  {
-#ifdef __IAR_SYSTEMS_ICC__
-    __enable_interrupt();
-#endif
-#ifdef __GNUC__
-    __asm volatile ("cpsie i");
-#endif
-#ifdef __CC_ARM
-      __enable_irq();
-#endif
-
-  }
 }
 
 /*************************************************************************************************/
@@ -174,39 +146,16 @@ void WsfSetOsSpecificEvent(void)
 
       BaseType_t xHigherPriorityTaskWoken, xResult;
 
-      if(xPortIsInsideInterrupt() == pdTRUE) {
-
-          //
-          // Send an event to the main radio task
-          //
-          xHigherPriorityTaskWoken = pdFALSE;
-
-          xResult = xEventGroupSetBitsFromISR(xRadioTaskEventObject, 1,
-                                              &xHigherPriorityTaskWoken);
-
-          //
-          // If the radio task is higher-priority than the context we're currently
-          // running from, we should yield now and run the radio task.
-          //
-          if ( xResult != pdFAIL )
-          {
-              portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-          }    
-
+      xResult = xEventGroupSetBits(xRadioTaskEventObject, 1);
+      //
+      // If the radio task is higher priority than the context we're currently
+      // running from, we should yield now and run the radio task.
+      //
+      if ( xResult != pdFAIL )
+      {
+          // portYIELD();
+          // yield();
       }
-      else {
-
-          xResult = xEventGroupSetBits(xRadioTaskEventObject, 1);
-          //
-          // If the radio task is higher priority than the context we're currently
-          // running from, we should yield now and run the radio task.
-          //
-          if ( xResult != pdFAIL )
-          {
-              // portYIELD();
-          }
-      }
-
   }    
 }
 
