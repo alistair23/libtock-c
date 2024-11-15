@@ -14,6 +14,8 @@
 
 // Include some libtock-c helpers
 #include <libtock-sync/sensors/humidity.h>
+#include <libtock-sync/sensors/moisture.h>
+#include <libtock-sync/sensors/rainfall.h>
 #include <libtock-sync/sensors/temperature.h>
 #include <libtock-sync/storage/kv.h>
 
@@ -29,7 +31,7 @@ uint8_t nwkKey[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 const LoRaWANBand_t* Region = &AU915;
 const uint8_t subBand       = 2;
 
-#define MAX_PAYLOAD_SIZE 10
+#define MAX_PAYLOAD_SIZE 20
 
 #define JOIN_EUI_KEY_LEN  8
 uint8_t join_eui_key_buf[JOIN_EUI_KEY_LEN] = "joinEUI";
@@ -221,19 +223,72 @@ int main(void) {
   hal->detachInterrupt(RADIOLIB_RADIO_DIO_1);
   hal->pinMode(RADIOLIB_RADIO_DIO_1, TOCK_RADIOLIB_PIN_INPUT);
 
-  int temp = 0;
-  int humi = 0;
+  bool temp_exists = false;
+  bool humi_exists = false;
+  bool mois_exists = false;
+  bool rain_exists = false;
+  int temp         = 0;
+  int humi         = 0;
+  int mois         = 0;
+  uint32_t rain    = 0;
+
+  printf("Probing sensors.\r\n");
+
+  if (libtock_temperature_exists()) {
+    printf("Temperature sensor exists.\r\n");
+    temp_exists = true;
+  }
+
+  if (libtock_humidity_exists()) {
+    printf("Humidity sensor exists.\r\n");
+    humi_exists = true;
+  }
+
+  if (libtock_moisture_exists()) {
+    printf("Moisture sensor exists.\r\n");
+    mois_exists = true;
+  }
+
+  if (libtock_rainfall_exists()) {
+    printf("Rainfall sensor exists.\r\n");
+    rain_exists = true;
+  }
 
   // loop forever
   for ( ;;) {
     Payload.reset();
 
-    // Read some sensor data from the board
-    libtocksync_temperature_read(&temp);
-    libtocksync_humidity_read(&humi);
+    printf("Reading sensor data\r\n");
 
-    Payload.addTemperature(0, temp);
-    Payload.addRelativeHumidity(0, humi);
+    // Read some sensor data from the board
+    if (temp_exists) {
+      if (libtocksync_temperature_read(&temp) == RETURNCODE_SUCCESS) {
+        printf("Temperature: %d\r\n", temp);
+        Payload.addTemperature(0, (float) temp / 100);
+      }
+    }
+    if (humi_exists) {
+      if (libtocksync_humidity_read(&humi) == RETURNCODE_SUCCESS) {
+        printf("Humidity: %d\r\n", humi);
+        Payload.addRelativeHumidity(0, (float) humi / 100);
+      }
+    }
+    if (mois_exists) {
+      if (libtocksync_moisture_read(&mois) == RETURNCODE_SUCCESS) {
+        printf("Moisture: %d\r\n", mois);
+        Payload.addRelativeHumidity(1, (float) mois / 100);
+      }
+    }
+    if (rain_exists) {
+      if (libtocksync_rainfall_read(&rain, 1) == RETURNCODE_SUCCESS) {
+        printf("Rainfall in last hour: %d\r\n", rain);
+        Payload.addAnalogInput(0, (float) rain / 1000);
+      }
+      if (libtocksync_rainfall_read(&rain, 24) == RETURNCODE_SUCCESS) {
+        printf("Rainfall in last 24 hours: %d\r\n", rain);
+        Payload.addAnalogInput(1, (float) rain / 1000);
+      }
+    }
 
     printf("[SX1261] Transmitting\r\n");
 
