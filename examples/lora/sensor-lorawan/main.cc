@@ -45,8 +45,17 @@ uint8_t nwk_key_key_buf[NWK_KEY_KEY_LEN] = "nwkKey";
 #define APP_KEY_KEY_LEN  7
 uint8_t app_key_key_buf[APP_KEY_KEY_LEN] = "appKey";
 
+#define INTERNAL_NONCE_KEY_LEN  10
+uint8_t internal_nonce_key_buf[INTERNAL_NONCE_KEY_LEN] = "int-nonce";
+
+#define INTERNAL_SESSION_KEY_LEN  12
+uint8_t internal_session_key_buf[INTERNAL_SESSION_KEY_LEN] = "int-session";
+
 #define KV_DATA_LEN 8
 uint8_t kv_data_buf[KV_DATA_LEN];
+
+uint8_t internal_nonce_data_buf[RADIOLIB_LORAWAN_NONCES_BUF_SIZE];
+uint8_t internal_session_data_buf[RADIOLIB_LORAWAN_SESSION_BUF_SIZE];
 
 // Retrieve the joinEUI from the Tock K/V store
 static int retrieve_join_eui(void) {
@@ -138,6 +147,79 @@ static int retrieve_app_key(void) {
   }
 }
 
+static int retrieve_internal_nonces(void) {
+  uint32_t value_len;
+  returncode_t ret;
+
+  if (!libtock_kv_exists()) {
+    return 1;
+  }
+
+  ret = libtocksync_kv_get(internal_nonce_key_buf, INTERNAL_NONCE_KEY_LEN, internal_nonce_data_buf,
+                           RADIOLIB_LORAWAN_NONCES_BUF_SIZE, &value_len);
+
+  if (ret == RETURNCODE_SUCCESS) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+static int set_internal_nonces(const uint8_t* persistentBuffer) {
+  returncode_t ret;
+
+  if (!libtock_kv_exists()) {
+    return 1;
+  }
+
+  ret = libtocksync_kv_set(internal_nonce_key_buf, INTERNAL_NONCE_KEY_LEN, persistentBuffer,
+                           RADIOLIB_LORAWAN_NONCES_BUF_SIZE);
+
+  if (ret == RETURNCODE_SUCCESS) {
+    printf("Set internal nonce buffer\r\n");
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+static int retrieve_internal_session(void) {
+  uint32_t value_len;
+  returncode_t ret;
+
+  if (!libtock_kv_exists()) {
+    return 1;
+  }
+
+  ret = libtocksync_kv_get(internal_session_key_buf, INTERNAL_SESSION_KEY_LEN, internal_session_data_buf,
+                           RADIOLIB_LORAWAN_SESSION_BUF_SIZE, &value_len);
+
+  if (ret == RETURNCODE_SUCCESS) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+static int set_internal_session(const uint8_t* persistentBuffer) {
+  returncode_t ret;
+
+  if (!libtock_kv_exists()) {
+    return 1;
+  }
+
+  ret = libtocksync_kv_set(internal_session_key_buf, INTERNAL_SESSION_KEY_LEN, persistentBuffer,
+                           RADIOLIB_LORAWAN_SESSION_BUF_SIZE);
+
+  if (ret == RETURNCODE_SUCCESS) {
+    printf("Set internal session buffer\r\n");
+    return 0;
+  } else {
+    printf("Fail internal session buffer\r\n");
+    return 1;
+  }
+}
+
 // Retrieve the LoRaWAN keys from the Tock K/V store
 static int retrieve_keys(void) {
   if (retrieve_join_eui() == 0) {
@@ -211,14 +293,34 @@ int main(void) {
 
   node.beginOTAA(joinEUI, devEUI, nwkKey, appKey);
 
+  if (retrieve_internal_nonces() == 0) {
+    printf("Found existing nonce\n");
+    node.setBufferNonces(internal_nonce_data_buf);
+  }
+
+  if (retrieve_internal_session() == 0) {
+    printf("Using existing session data\n");
+
+    state = node.setBufferSession(internal_session_data_buf);
+
+    if (state != 0) {
+      printf("setBufferSession failed, code %d\r\n", state);
+    }
+  }
+
   state = node.activateOTAA();
 
-  if (state != RADIOLIB_LORAWAN_NEW_SESSION) {
+  if (state == RADIOLIB_LORAWAN_SESSION_RESTORED) {
+    printf("activateOTAA restored session\r\n");
+  } else if (state != RADIOLIB_LORAWAN_NEW_SESSION) {
     printf("activateOTAA failed, code %d\r\n", state);
     return 1;
   }
 
-  printf("success!\r\n");
+  printf("activate success!\r\n");
+
+  set_internal_nonces(node.getBufferNonces());
+  set_internal_session(node.getBufferSession());
 
   hal->detachInterrupt(RADIOLIB_RADIO_DIO_1);
   hal->pinMode(RADIOLIB_RADIO_DIO_1, TOCK_RADIOLIB_PIN_INPUT);
@@ -258,34 +360,27 @@ int main(void) {
   for ( ;;) {
     Payload.reset();
 
-    printf("Reading sensor data\r\n");
-
     // Read some sensor data from the board
     if (temp_exists) {
       if (libtocksync_temperature_read(&temp) == RETURNCODE_SUCCESS) {
-        printf("Temperature: %d\r\n", temp);
         Payload.addTemperature(0, (float) temp / 100);
       }
     }
     if (humi_exists) {
       if (libtocksync_humidity_read(&humi) == RETURNCODE_SUCCESS) {
-        printf("Humidity: %d\r\n", humi);
         Payload.addRelativeHumidity(0, (float) humi / 100);
       }
     }
     if (mois_exists) {
       if (libtocksync_moisture_read(&mois) == RETURNCODE_SUCCESS) {
-        printf("Moisture: %d\r\n", mois);
         Payload.addRelativeHumidity(1, (float) mois / 100);
       }
     }
     if (rain_exists) {
       if (libtocksync_rainfall_read(&rain, 1) == RETURNCODE_SUCCESS) {
-        printf("Rainfall in last hour: %d\r\n", rain);
         Payload.addAnalogInput(0, (float) rain / 1000);
       }
       if (libtocksync_rainfall_read(&rain, 24) == RETURNCODE_SUCCESS) {
-        printf("Rainfall in last 24 hours: %d\r\n", rain);
         Payload.addAnalogInput(1, (float) rain / 1000);
       }
     }
@@ -296,10 +391,12 @@ int main(void) {
 
     if (state >= 0) {
       // the packet was successfully transmitted
-      printf("success!\r\n");
     } else {
-      printf("failed, code %d\r\n", state);
+      printf("failed to transmit, code %d\r\n", state);
     }
+
+    set_internal_nonces(node.getBufferNonces());
+    set_internal_session(node.getBufferSession());
 
     printf("Waiting 60 minutes before transmitting again\r\n");
     for (int i = 0; i < 60; i++) {
