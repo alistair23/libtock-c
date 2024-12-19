@@ -57,6 +57,8 @@ uint8_t kv_data_buf[KV_DATA_LEN];
 uint8_t internal_nonce_data_buf[RADIOLIB_LORAWAN_NONCES_BUF_SIZE];
 uint8_t internal_session_data_buf[RADIOLIB_LORAWAN_SESSION_BUF_SIZE];
 
+static libtock_alarm_t wdt_alarm;
+
 // Retrieve the joinEUI from the Tock K/V store
 static int retrieve_join_eui(void) {
   uint32_t value_len;
@@ -255,12 +257,52 @@ static int retrieve_keys(void) {
   return 0;
 }
 
+static int garbage_collect(void) {
+  int ret = libtocksync_kv_garbage_collect();
+
+  if (ret == RETURNCODE_SUCCESS) {
+    return 0;
+  } else {
+    printf("Garbage Collection Failed\r\n");
+    return 1;
+  }
+}
+
+static void wdt_alarm_cb(__attribute__ ((unused)) uint32_t now,
+                         __attribute__ ((unused)) uint32_t scheduled,
+                         __attribute__ ((unused)) void*    opaque) {
+
+  tock_restart(1);
+}
+
+static bool within_percent(int current, int past) {
+  int lowest  = (past * 90) / 100;
+  int highest = (past * 110) / 100;
+
+  if (past == 0 && current != 0) {
+    return true;
+  }
+
+  if (lowest <= current && current <= highest) {
+    return false;
+  }
+
+  return true;
+}
+
 // the entry point for the program
 int main(void) {
   CayenneLPP Payload(MAX_PAYLOAD_SIZE);
 
+  // Setup alarm to reset app in 5 minutes
+  libtock_alarm_in_ms(5 * 60 * 1000, wdt_alarm_cb, NULL, &wdt_alarm);
+
   // Retrieve the LoRaWAN keys from the Tock K/V store
   if (retrieve_keys()) {
+    return 1;
+  }
+
+  if (garbage_collect()) {
     return 1;
   }
 
@@ -329,10 +371,11 @@ int main(void) {
   bool humi_exists = false;
   bool mois_exists = false;
   bool rain_exists = false;
-  int temp         = 0;
-  int humi         = 0;
-  int mois         = 0;
-  uint32_t rain    = 0;
+  int temp = 0, past_temp = -1;
+  int humi = 0, past_humi = -1;
+  int mois = 0, past_mois = -1;
+  uint32_t rain = 0, past_rain = -1;
+  int loop_skip_count = 0;
 
   printf("Probing sensors.\r\n");
 
@@ -356,52 +399,85 @@ int main(void) {
     rain_exists = true;
   }
 
+  libtock_alarm_ms_cancel(&wdt_alarm);
+
   // loop forever
   for ( ;;) {
+    // Setup alarm to reset app in 10 minutes
+    libtock_alarm_in_ms(10 * 60 * 1000, wdt_alarm_cb, NULL, &wdt_alarm);
+
     Payload.reset();
+
+    // printf("Reading sensor data\r\n");
 
     // Read some sensor data from the board
     if (temp_exists) {
       if (libtocksync_temperature_read(&temp) == RETURNCODE_SUCCESS) {
+        // printf("Temperature: %d\r\n", temp);
         Payload.addTemperature(0, (float) temp / 100);
       }
     }
     if (humi_exists) {
       if (libtocksync_humidity_read(&humi) == RETURNCODE_SUCCESS) {
+        // printf("Humidity: %d\r\n", humi);
         Payload.addRelativeHumidity(0, (float) humi / 100);
       }
     }
     if (mois_exists) {
       if (libtocksync_moisture_read(&mois) == RETURNCODE_SUCCESS) {
+        // printf("Moisture: %d\r\n", mois);
         Payload.addRelativeHumidity(1, (float) mois / 100);
       }
     }
     if (rain_exists) {
-      if (libtocksync_rainfall_read(&rain, 1) == RETURNCODE_SUCCESS) {
-        Payload.addAnalogInput(0, (float) rain / 1000);
-      }
       if (libtocksync_rainfall_read(&rain, 24) == RETURNCODE_SUCCESS) {
+        // printf("Rainfall in last 24 hours: %d\r\n", rain);
         Payload.addAnalogInput(1, (float) rain / 1000);
       }
+      if (libtocksync_rainfall_read(&rain, 1) == RETURNCODE_SUCCESS) {
+        // printf("Rainfall in last hour: %d\r\n", rain);
+        Payload.addAnalogInput(0, (float) rain / 1000);
+      }
     }
 
-    printf("[SX1261] Transmitting\r\n");
+    if ((within_percent(temp, past_temp) ||
+         within_percent(humi, past_humi) ||
+         within_percent(mois, past_mois) ||
+         within_percent(rain, past_rain) ||
+         loop_skip_count >= 11) &&
+        Payload.getSize() > 0) {
+      printf("[SX1261] Transmitting\r\n");
 
-    state = node.sendReceive(Payload.getBuffer(), Payload.getSize());
+      past_temp = temp;
+      past_humi = humi;
+      past_mois = mois;
+      past_rain = rain;
 
-    if (state >= 0) {
-      // the packet was successfully transmitted
+      // Avoid transmit delays if the timer wraps around by clearing the
+      // next transmit schedule
+      node.scheduleTransmission(0);
+
+      state = node.sendReceive(Payload.getBuffer(), Payload.getSize());
+
+      if (state >= 0) {
+        // the packet was successfully transmitted
+      } else {
+        printf("failed to transmit, code %d\r\n", state);
+      }
+
+      set_internal_nonces(node.getBufferNonces());
+      set_internal_session(node.getBufferSession());
+      garbage_collect();
+
+      loop_skip_count = 0;
     } else {
-      printf("failed to transmit, code %d\r\n", state);
+      loop_skip_count++;
     }
 
-    set_internal_nonces(node.getBufferNonces());
-    set_internal_session(node.getBufferSession());
+    printf("Waiting 5 minutes before transmitting again\r\n");
+    hal->delay(5 * 60 * 1000);
 
-    printf("Waiting 60 minutes before transmitting again\r\n");
-    for (int i = 0; i < 60; i++) {
-      hal->delay(60 * 1000);
-    }
+    libtock_alarm_ms_cancel(&wdt_alarm);
   }
 
   return 0;

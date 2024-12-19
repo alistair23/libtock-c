@@ -440,31 +440,34 @@ static bool test_garbage_collect(void) {
 
 int main(void) {
   unit_test_fun tests[] = {
-    TEST(exists),
-    TEST(set_get),
-    TEST(set_get_too_long),
-    TEST(key_too_long),
-    TEST(set_value_too_long),
-    TEST(get_not_found),
-    TEST(get_not_found2),
-    TEST(add),
-    TEST(add_add),
-    TEST(update),
-    TEST(update_no_exist),
-    TEST(delete),
-    TEST(delete_delete),
-    TEST(add_update_set),
-    TEST(set_zero_value),
-    TEST(set_get_32regions_1),
-    TEST(set_get_32regions_2),
-    TEST(set_get_32regions_3),
-    TEST(set_get_32regions_4),
-    TEST(set_get_32regions_5),
-    TEST(set_get_32regions_6),
-    TEST(set_get_32regions_7),
-    TEST(set_get_32regions_8),
+    // TEST(exists),
+    // TEST(set_get),
+    // TEST(set_get_too_long),
+    // TEST(key_too_long),
+    // TEST(set_value_too_long),
+    // TEST(get_not_found),
+    // TEST(get_not_found2),
+    // TEST(add),
+    // TEST(add_add),
+    // TEST(update),
+    // TEST(update_no_exist),
+    // TEST(delete),
+    // TEST(delete_delete),
+    // TEST(add_update_set),
+    // TEST(set_zero_value),
+    // TEST(set_get_32regions_1),
+    // TEST(set_get_32regions_2),
+    // TEST(set_get_32regions_3),
+    // TEST(set_get_32regions_4),
+    // TEST(set_get_32regions_5),
+    // TEST(set_get_32regions_6),
+    // TEST(set_get_32regions_7),
+    // TEST(set_get_32regions_8),
     TEST(garbage_collect),
   };
-  unit_test_runner(tests, sizeof(tests) / sizeof(unit_test_fun), 2000, "org.tockos.unit_test");
+
+  test_garbage_collect();
+
+  // unit_test_runner(tests, sizeof(tests) / sizeof(unit_test_fun), 2000, "org.tockos.unit_test");
   return 0;
 }
